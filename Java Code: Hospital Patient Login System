@@ -1,0 +1,69 @@
+import java.util.*;
+
+class Patient {
+    String name;
+    int age;
+    String gender;
+    String roomNumber;
+    String assignedStaff; // Doctor or Nurse
+
+    public Patient(String name, int age, String gender, String roomNumber, String assignedStaff) {
+        this.name = name;
+        this.age = age;
+        this.gender = gender;
+        this.roomNumber = roomNumber;
+        this.assignedStaff = assignedStaff;
+    }
+
+    public void displayInfo() {
+        System.out.println("\n--- Patient Information ---");
+        System.out.println("Name: " + name);
+        System.out.println("Age: " + age);
+        System.out.println("Gender: " + gender);
+        System.out.println("Room Number: " + roomNumber);
+        System.out.println("Assigned Staff: " + assignedStaff);
+    }
+}
+
+public class HospitalSystem {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        List<Patient> patientList = new ArrayList<>();
+
+        System.out.println("=== Hospital Patient Login System ===");
+
+        while (true) {
+            System.out.print("\nEnter patient name: ");
+            String name = scanner.nextLine();
+
+            System.out.print("Enter age: ");
+            int age = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            System.out.print("Enter gender: ");
+            String gender = scanner.nextLine();
+
+            System.out.print("Enter room number: ");
+            String roomNumber = scanner.nextLine();
+
+            System.out.print("Enter assigned doctor or nurse: ");
+            String assignedStaff = scanner.nextLine();
+
+            Patient patient = new Patient(name, age, gender, roomNumber, assignedStaff);
+            patientList.add(patient);
+
+            System.out.print("\nAdd another patient? (yes/no): ");
+            String choice = scanner.nextLine();
+            if (!choice.equalsIgnoreCase("yes")) {
+                break;
+            }
+        }
+
+        System.out.println("\n=== All Registered Patients ===");
+        for (Patient p : patientList) {
+            p.displayInfo();
+        }
+
+        scanner.close();
+    }
+}
