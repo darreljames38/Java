@@ -1,0 +1,101 @@
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner input = new Scanner(System.in);
+
+        // Input student details
+        System.out.print("Enter ID Number: ");
+        int idNumber = input.nextInt();
+        input.nextLine(); // Consume newline
+
+        System.out.print("Enter your full name: ");
+        String name = input.nextLine();
+
+        System.out.print("Enter your course: ");
+        String course = input.nextLine();
+
+        System.out.print("Enter your birthyear: ");
+        int birthyear = input.nextInt();
+
+        // Create Student object using parameterized constructor
+        Student stud1 = new Student(idNumber, name, course, birthyear);
+
+        // Confirm and display data
+        stud1.confirm();
+        System.out.println();
+        stud1.displayStudentDetails();
+
+        input.close();
+    }
+}
+
+class Student {
+    // Encapsulated attributes
+    private int idNumber;
+    private String name;
+    private String course;
+    private int birthyear;
+
+    // Default constructor
+    public Student() {
+        this.idNumber = 0;
+        this.name = "";
+        this.course = "";
+        this.birthyear = 0;
+    }
+
+    // Parameterized constructor
+    public Student(int idNumber, String name, String course, int birthyear) {
+        this.idNumber = idNumber;
+        this.name = name;
+        this.course = course;
+        this.birthyear = birthyear;
+    }
+
+    // Setters
+    public void setIdNumber(int idNumber) {
+        this.idNumber = idNumber;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setCourse(String course) {
+        this.course = course;
+    }
+
+    public void setBirthyear(int birthyear) {
+        this.birthyear = birthyear;
+    }
+
+    // Getters
+    public int getIdNumber() {
+        return this.idNumber;
+    }
+
+    public String getName() {
+        return this.name.toUpperCase();
+    }
+
+    public String getCourse() {
+        return this.course.toUpperCase();
+    }
+
+    public int getAge() {
+        return 2025 - this.birthyear;
+    }
+
+    // Custom methods
+    public void confirm() {
+        System.out.println("Student record is now saved...");
+    }
+
+    public void displayStudentDetails() {
+        System.out.println("ID Number: " + getIdNumber());
+        System.out.println("Full Name: " + getName());
+        System.out.println("Course: " + getCourse());
+        System.out.println("Age: " + getAge());
+    }
+}
