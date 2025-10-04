@@ -1,0 +1,100 @@
+/*with scanner*/
+
+import java.util.Scanner;
+
+public class Time {
+    // Attributes
+    private int hour = 0;
+    private int minute = 0;
+    private int second = 0;
+
+    // Constructor
+    public Time(int h, int m, int s) {
+        setTime(h, m, s);
+    }
+
+    // Getters
+    public int getHour() {
+        return hour;
+    }
+
+    public int getMinute() {
+        return minute;
+    }
+
+    public int getSecond() {
+        return second;
+    }
+
+    // Setters
+    public void setHour(int h) {
+        if (h >= 0 && h < 24) {
+            this.hour = h;
+        }
+    }
+
+    public void setMinute(int m) {
+        if (m >= 0 && m < 60) {
+            this.minute = m;
+        }
+    }
+
+    public void setSecond(int s) {
+        if (s >= 0 && s < 60) {
+            this.second = s;
+        }
+    }
+
+    // Set all at once
+    public void setTime(int h, int m, int s) {
+        setHour(h);
+        setMinute(m);
+        setSecond(s);
+    }
+
+    // Print time in hh:mm:ss format
+    public void print() {
+        System.out.printf("%02d:%02d:%02d\n", hour, minute, second);
+    }
+
+    // Move to next second
+    public void nextSecond() {
+        second++;
+        if (second >= 60) {
+            second = 0;
+            minute++;
+            if (minute >= 60) {
+                minute = 0;
+                hour++;
+                if (hour >= 24) {
+                    hour = 0;
+                }
+            }
+        }
+    }
+
+    // Main method with Scanner input
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter hours (0-23): ");
+        int h = sc.nextInt();
+
+        System.out.print("Enter minutes (0-59): ");
+        int m = sc.nextInt();
+
+        System.out.print("Enter seconds (0-59): ");
+        int s = sc.nextInt();
+
+        Time t = new Time(h, m, s);
+
+        System.out.println("Initial Time: ");
+        t.print();
+
+        System.out.println("After 1 second: ");
+        t.nextSecond();
+        t.print();
+
+        sc.close();
+    }
+}
