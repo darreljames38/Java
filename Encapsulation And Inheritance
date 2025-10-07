@@ -1,0 +1,81 @@
+// Superclass (Parent)
+class Person {
+    // Encapsulation: private fields
+    private String name;
+    private int age;
+
+    // Constructor
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    // Getter method for name
+    public String getName() {
+        return name;
+    }
+
+    // Setter method for name
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    // Getter method for age
+    public int getAge() {
+        return age;
+    }
+
+    // Setter method for age
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    // Method to display details
+    public void displayInfo() {
+        System.out.println("Name: " + name);
+        System.out.println("Age: " + age);
+    }
+}
+
+// Subclass (Child) that inherits Person
+class Student extends Person {
+    private String studentID; // additional field for student
+
+    // Constructor: uses super() to call parent constructor
+    public Student(String name, int age, String studentID) {
+        super(name, age); // calls Person(name, age)
+        this.studentID = studentID;
+    }
+
+    // Getter and Setter for studentID
+    public String getStudentID() {
+        return studentID;
+    }
+
+    public void setStudentID(String studentID) {
+        this.studentID = studentID;
+    }
+
+    // Overriding displayInfo() to add studentID
+    @Override
+    public void displayInfo() {
+        super.displayInfo(); // call parent method first
+        System.out.println("Student ID: " + studentID);
+    }
+}
+
+// Main class
+public class Main {
+    public static void main(String[] args) {
+        // Create a Student object
+        Student student = new Student("Daryl", 21, "IT2025");
+
+        // Access encapsulated data via methods
+        student.displayInfo();
+
+        // Modify data safely using setters
+        student.setAge(22);
+        System.out.println("\nAfter updating age:");
+        student.displayInfo();
+    }
+}
