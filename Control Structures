@@ -1,0 +1,75 @@
+import java.util.Scanner;
+
+public class ControlStructuresDemo {
+    public static void main(String[] args) {
+        Scanner input = new Scanner(System.in);
+
+        // ===============================
+        // 1️⃣ IF - ELSE STATEMENT
+        // ===============================
+        System.out.print("Enter your age: ");
+        int age = input.nextInt();
+
+        if (age >= 18) {
+            System.out.println("You are an adult.");
+        } else {
+            System.out.println("You are a minor.");
+        }
+
+        // ===============================
+        // 2️⃣ SWITCH - CASE STATEMENT
+        // ===============================
+        System.out.print("\nEnter a number from 1 to 3: ");
+        int num = input.nextInt();
+
+        switch (num) {
+            case 1:
+                System.out.println("You chose number one.");
+                break;
+            case 2:
+                System.out.println("You chose number two.");
+                break;
+            case 3:
+                System.out.println("You chose number three.");
+                break;
+            default:
+                System.out.println("Invalid number!");
+                break;
+        }
+
+        // ===============================
+        // 3️⃣ WHILE LOOP
+        // ===============================
+        System.out.println("\nCounting from 1 to 5 using WHILE loop:");
+        int i = 1;
+        while (i <= 5) {
+            System.out.println("Count: " + i);
+            i++;
+        }
+
+        // ===============================
+        // 4️⃣ DO - WHILE LOOP
+        // ===============================
+        System.out.println("\nEnter a number greater than 0 (Do-While Example):");
+        int number;
+        do {
+            System.out.print("Number: ");
+            number = input.nextInt();
+            if (number <= 0) {
+                System.out.println("Try again! Must be greater than 0.");
+            }
+        } while (number <= 0);
+
+        System.out.println("You entered a valid number: " + number);
+
+        // ===============================
+        // 5️⃣ FOR LOOP
+        // ===============================
+        System.out.println("\nDisplaying numbers 1 to 5 using FOR loop:");
+        for (int j = 1; j <= 5; j++) {
+            System.out.println("Number: " + j);
+        }
+
+        input.close();
+    }
+}
