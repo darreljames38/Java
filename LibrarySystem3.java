@@ -1,3 +1,9 @@
+// Importing all essential Java libraries for this project
+// java.util.* → for ArrayList, Scanner, etc.
+// java.io.* → for file reading and writing
+// java.time.* → for LocalDate and date operations
+// java.nio.file.* → for file path management (Files, Paths)
+
 import java.util.*;
 import java.io.*;
 import java.time.*;
@@ -6,30 +12,43 @@ import java.nio.file.*;
 /**
  * LibrarySystem.java
  *
- * Console-based Library System implementing the given project specification.
+ * A console-based Library System that can:
+ *  - Manage Borrowers (add, edit, delete, view)
+ *  - Manage Materials (add, edit, delete, view)
+ *  - Borrow and return library materials
+ *  - Track borrower and material history
  *
- * Usage:
- *  javac LibrarySystem.java
- *  java LibrarySystem
- *
- * Data files:
- *  - borrowers.txt
- *  - materials.txt
- *  - transactions.txt
+ * Features:
+ *   Auto ID generator for both borrowers and materials
+ *   File saving and loading (persistent data)
+ *   Borrowing and returning with violation tracking
+ *   Uses LocalDate for due dates
  *
  * Group name: Fantastic4
  */
 
 public class LibrarySystem {
+      //MAIN DATA STRUCTURES
+    // These ArrayLists store all records in memory while the program runs.
     private static ArrayList<Borrower> borrowers = new ArrayList<>();
     private static ArrayList<Material> materials = new ArrayList<>();
     private static ArrayList<Transaction> transactions = new ArrayList<>();
-    private static int borrowerIdCounter = 2025000;
-    private static int materialIdCounter = 0;
-    private static final Scanner sc = new Scanner(System.in);
 
+      //AUTO ID GENERATORS 
+    // borrowerIdCounter starts at 2025000 
+    private static int borrowerIdCounter = 2025000;
+    // materialIdCounter starts at 0 and increases per added material
+    private static int materialIdCounter = 0;
+
+    // Scanner for user input (shared across all methods)
+    private static final Scanner sc = new Scanner(System.in);
+    
+    // MAIN METHOD
     public static void main(String[] args) {
+        // Loads saved data from files at program start
         loadFiles();
+
+         // Main menu loop
         while (true) {
             System.out.println("\n====== FANTASTIC4 LIBRARY SYSTEM ======");
             System.out.println("1. Borrowers Management");
@@ -42,6 +61,7 @@ public class LibrarySystem {
             System.out.print("Choose: ");
             String choice = sc.nextLine();
 
+            // Main menu loop
             switch (choice) {
                 case "1" -> manageBorrowers();
                 case "2" -> manageAssets();
@@ -55,7 +75,8 @@ public class LibrarySystem {
         }
     }
 
-    // ====================== BORROWER MANAGEMENT ======================
+    // BORROWER MANAGEMENT 
+    // Submenu for managing borrowers
     private static void manageBorrowers() {
         while (true) {
             System.out.println("\n--- Borrowers Management ---");
@@ -72,12 +93,12 @@ public class LibrarySystem {
                 case "2" -> editBorrower();
                 case "3" -> deleteBorrower();
                 case "4" -> viewBorrowers();
-                case "5" -> { return; }
+                case "5" -> { return; }  // Goes back to main menu
                 default -> System.out.println("Invalid choice. Try again.");
             }
         }
     }
-
+    // Adds a new borrower to the system
     private static void addBorrower() {
         try {
             System.out.print("Enter first name: ");
@@ -99,18 +120,18 @@ public class LibrarySystem {
 
             System.out.print("Enter email: ");
             String email = sc.nextLine();
-            if (!email.contains("@") || !email.contains(".")) {
-                System.out.println("Invalid email format.");
+            if (!email.contains("@") || !email.contains(".")) { // Simple email validation
+                System.out.println("Invalid email format."); 
                 return;
             }
-
+            // Prevent duplicate email registrations
             for (Borrower b : borrowers) {
                 if (b.email.equalsIgnoreCase(email)) {
                     System.out.println("Borrower already registered!");
                     return;
                 }
             }
-
+            // Auto ID generation for new borrower
             Borrower borrower = new Borrower(borrowerIdCounter++, first, last, age, email);
             borrowers.add(borrower);
             saveBorrowers();
@@ -120,7 +141,7 @@ public class LibrarySystem {
             System.out.println("Error adding borrower: " + e.getMessage());
         }
     }
-
+    // Edits existing borrower information (first name, last name, and email)
     private static void editBorrower() {
         System.out.print("Enter borrower ID to edit: ");
         try {
@@ -151,7 +172,7 @@ public class LibrarySystem {
             System.out.println("Invalid input.");
         }
     }
-
+    // Deletes borrower by ID
     private static void deleteBorrower() {
         System.out.print("Enter borrower ID to delete: ");
         try {
@@ -163,7 +184,7 @@ public class LibrarySystem {
             System.out.println("Error deleting borrower.");
         }
     }
-
+    // Displays list of all borrowers
     private static void viewBorrowers() {
         if (borrowers.isEmpty()) {
             System.out.println("No borrowers found.");
@@ -175,7 +196,8 @@ public class LibrarySystem {
         }
     }
 
-    // ====================== ASSET MANAGEMENT ======================
+    //ASSET MANAGEMENT 
+    // Submenu for materials (books, journals, magazine, thesis)
     private static void manageAssets() {
         while (true) {
             System.out.println("\n--- Asset Management ---");
@@ -197,7 +219,7 @@ public class LibrarySystem {
             }
         }
     }
-
+    // Adds a new material
     private static void addMaterial() {
         try {
             System.out.print("Enter material type (Book/Journal/Magazine/Thesis): ");
@@ -210,14 +232,14 @@ public class LibrarySystem {
             int year = Integer.parseInt(sc.nextLine());
             System.out.print("Enter total copies: ");
             int copies = Integer.parseInt(sc.nextLine());
-
+            // Prevent duplicate materials
             for (Material m : materials) {
                 if (m.title.equalsIgnoreCase(title)) {
                     System.out.println("Duplicate material not allowed!");
                     return;
                 }
             }
-
+            // Auto ID generation for materials
             Material mat = new Material(materialIdCounter++, type, title, author, year, copies);
             materials.add(mat);
             saveMaterials();
@@ -226,7 +248,7 @@ public class LibrarySystem {
             System.out.println("Error adding material.");
         }
     }
-
+    // Edits total copies of a material
     private static void editMaterial() {
         System.out.print("Enter material ID to edit: ");
         try {
@@ -245,7 +267,7 @@ public class LibrarySystem {
             System.out.println("Invalid input.");
         }
     }
-
+    // Deletes material by ID
     private static void deleteMaterial() {
         System.out.print("Enter material ID to delete: ");
         try {
@@ -257,7 +279,7 @@ public class LibrarySystem {
             System.out.println("Error deleting material.");
         }
     }
-
+    // Displays all materials in the library
     private static void viewMaterials() {
         if (materials.isEmpty()) {
             System.out.println("No materials found.");
@@ -269,7 +291,8 @@ public class LibrarySystem {
         }
     }
 
-    // ====================== BORROW & RETURN ======================
+    // BORROW & RETURN 
+    // Borrowing a material
     private static void borrowMaterial() {
         try {
             System.out.print("Enter borrower ID: ");
@@ -303,7 +326,7 @@ public class LibrarySystem {
             System.out.println("Error borrowing material.");
         }
     }
-
+    // Returning borrowed material
     private static void returnMaterial() {
         try {
             System.out.print("Enter borrower ID: ");
@@ -314,6 +337,7 @@ public class LibrarySystem {
                     LocalDate now = LocalDate.now();
                     t.returned = true;
                     material.totalCopies++;
+                    // Check if late return
                     if (now.isAfter(t.dueDate)) {
                         Borrower b = findBorrower(bid);
                         b.violations++;
@@ -331,7 +355,7 @@ public class LibrarySystem {
             System.out.println("Error returning material.");
         }
     }
-
+    // Defines number of days each material type can be borrowed
     private static int getReturnDays(String type) {
         return switch (type.toLowerCase()) {
             case "book" -> 7;
@@ -342,7 +366,8 @@ public class LibrarySystem {
         };
     }
 
-    // ====================== HISTORY ======================
+    // HISTORY 
+    // Shows all transactions for a specific borrower
     private static void showBorrowerHistory() {
         System.out.print("Enter borrower ID: ");
         int bid = Integer.parseInt(sc.nextLine());
@@ -352,7 +377,7 @@ public class LibrarySystem {
                 System.out.println(t);
         }
     }
-
+    // Shows all transactions for a specific material
     private static void showBookHistory() {
         System.out.print("Enter material ID: ");
         int mid = Integer.parseInt(sc.nextLine());
@@ -363,13 +388,14 @@ public class LibrarySystem {
         }
     }
 
-    // ====================== FILE HANDLING ======================
+    // FILE HANDLING 
+    // Loads borrowers, materials, and transactions from text files
     private static void loadFiles() {
         try {
             Path borrowerPath = Paths.get("borrowers.txt");
             Path materialPath = Paths.get("materials.txt");
             Path transPath = Paths.get("transactions.txt");
-
+            // Create files if they don't exist
             if (!Files.exists(borrowerPath)) Files.createFile(borrowerPath);
             if (!Files.exists(materialPath)) Files.createFile(materialPath);
             if (!Files.exists(transPath)) Files.createFile(transPath);
@@ -398,7 +424,7 @@ public class LibrarySystem {
             System.out.println("Error loading files: " + e.getMessage());
         }
     }
-
+    // Saves borrowers to borrowers.txt
     private static void saveBorrowers() {
         try (PrintWriter pw = new PrintWriter("borrowers.txt")) {
             for (Borrower b : borrowers)
@@ -407,7 +433,7 @@ public class LibrarySystem {
             System.out.println("Error saving borrowers.");
         }
     }
-
+    // Saves materials to materials.txt
     private static void saveMaterials() {
         try (PrintWriter pw = new PrintWriter("materials.txt")) {
             for (Material m : materials)
@@ -416,7 +442,7 @@ public class LibrarySystem {
             System.out.println("Error saving materials.");
         }
     }
-
+    // Saves transactions to transactions.txt
     private static void saveTransactions() {
         try (PrintWriter pw = new PrintWriter("transactions.txt")) {
             for (Transaction t : transactions)
@@ -425,24 +451,25 @@ public class LibrarySystem {
             System.out.println("Error saving transactions.");
         }
     }
-
+    // Finds a borrower by ID
     private static Borrower findBorrower(int id) {
         for (Borrower b : borrowers) if (b.borrowerId == id) return b;
         return null;
     }
-
+    // Finds a material by ID
     private static Material findMaterial(int id) {
         for (Material m : materials) if (m.materialId == id) return m;
         return null;
     }
-
+    // Finds a material by ID
     private static void exitSystem() {
         System.out.println("\nThank you for using the Fantastic4 Library System!");
         System.exit(0);
     }
 }
 
-// ====================== CLASSES ======================
+// CLASSES 
+// Represents a library borrower with ID, name, age, email, and violation count
 class Borrower {
     int borrowerId;
     String firstName, lastName, email;
@@ -455,12 +482,12 @@ class Borrower {
     Borrower(int id, String f, String l, int a, String e, int v) {
         borrowerId = id; firstName = f; lastName = l; age = a; email = e; violations = v;
     }
-
+    // Displays borrower details in readable format
     public String toString() {
         return borrowerId + " | " + firstName + " " + lastName + " | Age: " + age + " | Email: " + email + " | Violations: " + violations;
     }
 }
-
+// Represents a library material 
 class Material {
     int materialId, year, totalCopies;
     String type, title, author;
@@ -486,7 +513,7 @@ class Transaction {
     Transaction(int bid, int mid, LocalDate b, LocalDate d, boolean r) {
         borrowerId = bid; materialId = mid; borrowDate = b; dueDate = d; returned = r;
     }
-
+    
     public String toString() {
         return "Borrower ID: " + borrowerId + " | Material ID: " + materialId +
                " | Borrowed: " + borrowDate + " | Due: " + dueDate + " | Returned: " + returned;
