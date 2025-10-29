@@ -1,0 +1,476 @@
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
+import java.util.stream.Collectors;
+
+/*
+ * LibrarySystem_refactored.java
+ * Refactored console-based Library System preserving:
+ * - automatic ID generation
+ * - encapsulation, polymorphism, abstraction, inheritance
+ * - file handling + exception handling
+ * - minimal but readable structure
+ */
+public class LibrarySystem {
+    private static final Scanner sc = new Scanner(System.in);
+    private static final List<Borrower> borrowers = new ArrayList<>();
+    private static final List<Material> materials = new ArrayList<>();
+    private static final List<Transaction> transactions = new ArrayList<>();
+
+    private static int borrowerIdCounter = 2025000;
+    private static int materialIdCounter = 0;
+
+    // file names
+    private static final String BORROWER_FILE = "borrowers.txt";
+    private static final String MATERIAL_FILE = "materials.txt";
+    private static final String TRANSACTION_FILE = "transactions.txt";
+
+    public static void main(String[] args) {
+        loadFiles();
+        while (true) {
+            switch (menu("FANTASTIC4 LIBRARY SYSTEM", "Borrowers Management", "Asset Management", "Borrow", "Return", "Borrower History", "Book History", "Exit")) {
+                case "1" -> manageBorrowers();
+                case "2" -> manageAssets();
+                case "3" -> borrowMaterial();
+                case "4" -> returnMaterial();
+                case "5" -> showBorrowerHistory();
+                case "6" -> showBookHistory();
+                case "7" -> exitSystem();
+                default -> System.out.println("Invalid choice. Try again.");
+            }
+        }
+    }
+
+    /* -------------------- MENUS -------------------- */
+    private static String menu(String title, String... options) {
+        System.out.println("\n====== " + title + " ======");
+        for (int i = 0; i < options.length; i++) System.out.println((i + 1) + ". " + options[i]);
+        System.out.print("Choose: ");
+        return sc.nextLine().trim();
+    }
+
+    private static void manageBorrowers() {
+        while (true) {
+            switch (menu("Borrowers Management", "Add Borrower", "Edit Borrower", "Delete Borrower", "View Borrowers", "Back")) {
+                case "1" -> addBorrower();
+                case "2" -> editBorrower();
+                case "3" -> deleteBorrower();
+                case "4" -> viewBorrowers();
+                case "5" -> { return; }
+                default -> System.out.println("Invalid choice.");
+            }
+        }
+    }
+
+    private static void manageAssets() {
+        while (true) {
+            switch (menu("Asset Management", "Add Material", "Edit Material", "Delete Material", "View Materials", "Back")) {
+                case "1" -> addMaterial();
+                case "2" -> editMaterial();
+                case "3" -> deleteMaterial();
+                case "4" -> viewMaterials();
+                case "5" -> { return; }
+                default -> System.out.println("Invalid choice.");
+            }
+        }
+    }
+
+    /* -------------------- BORROWER CRUD -------------------- */
+    private static void addBorrower() {
+        try {
+            System.out.print("Enter first name: ");
+            String first = sc.nextLine().trim();
+            if (!Validator.validName(first)) { System.out.println("Invalid first name."); return; }
+
+            System.out.print("Enter last name: ");
+            String last = sc.nextLine().trim();
+            if (!Validator.validName(last)) { System.out.println("Invalid last name."); return; }
+
+            System.out.print("Enter age: ");
+            int age = Integer.parseInt(sc.nextLine().trim());
+
+            System.out.print("Enter email: ");
+            String email = sc.nextLine().trim();
+            if (!Validator.validEmail(email)) { System.out.println("Invalid email format."); return; }
+
+            boolean exists = borrowers.stream().anyMatch(b -> b.getEmail().equalsIgnoreCase(email));
+            if (exists) { System.out.println("Borrower already registered!"); return; }
+
+            Borrower b = new Borrower(borrowerIdCounter++, first, last, age, email);
+            borrowers.add(b);
+            saveBorrowers();
+            System.out.println("Borrower added successfully! ID: " + b.getBorrowerId());
+        } catch (Exception e) {
+            System.out.println("Error adding borrower: " + e.getMessage());
+        }
+    }
+
+    private static void editBorrower() {
+        try {
+            System.out.print("Enter borrower ID to edit: ");
+            int id = Integer.parseInt(sc.nextLine().trim());
+            Optional<Borrower> ob = borrowers.stream().filter(b -> b.getBorrowerId() == id).findFirst();
+            if (ob.isEmpty()) { System.out.println("Borrower not found."); return; }
+            Borrower b = ob.get();
+
+            System.out.print("Enter new first name (enter to keep): ");
+            String s = sc.nextLine().trim(); if (!s.isEmpty()) b.setFirstName(s);
+
+            System.out.print("Enter new last name (enter to keep): ");
+            s = sc.nextLine().trim(); if (!s.isEmpty()) b.setLastName(s);
+
+            System.out.print("Enter new email (enter to keep): ");
+            s = sc.nextLine().trim(); if (!s.isEmpty()) {
+                if (!Validator.validEmail(s)) { System.out.println("Invalid email format."); return; }
+                b.setEmail(s);
+            }
+            saveBorrowers();
+            System.out.println("Borrower info updated!");
+        } catch (NumberFormatException e) { System.out.println("Invalid input."); }
+    }
+
+    private static void deleteBorrower() {
+        try {
+            System.out.print("Enter borrower ID to delete: ");
+            int id = Integer.parseInt(sc.nextLine().trim());
+            boolean removed = borrowers.removeIf(b -> b.getBorrowerId() == id);
+            if (removed) { saveBorrowers(); System.out.println("Borrower deleted."); }
+            else System.out.println("Borrower not found.");
+        } catch (Exception e) { System.out.println("Error deleting borrower: " + e.getMessage()); }
+    }
+
+    private static void viewBorrowers() {
+        if (borrowers.isEmpty()) { System.out.println("No borrowers found."); return; }
+        System.out.println("\n--- List of Borrowers ---");
+        borrowers.forEach(System.out::println);
+    }
+
+    /* -------------------- MATERIAL CRUD -------------------- */
+    private static void addMaterial() {
+        try {
+            System.out.print("Enter material type (Book/Journal/Magazine/Thesis): ");
+            String type = sc.nextLine().trim();
+            System.out.print("Enter title/name: ");
+            String title = sc.nextLine().trim();
+            System.out.print("Enter author/publisher: ");
+            String author = sc.nextLine().trim();
+            System.out.print("Enter year published: ");
+            int year = Integer.parseInt(sc.nextLine().trim());
+            System.out.print("Enter total copies: ");
+            int copies = Integer.parseInt(sc.nextLine().trim());
+
+            boolean dup = materials.stream().anyMatch(m -> m.getTitle().equalsIgnoreCase(title) && m.getAuthor().equalsIgnoreCase(author));
+            if (dup) { System.out.println("Duplicate material not allowed!"); return; }
+
+            Material mat = type.equalsIgnoreCase("book") ? new Book(materialIdCounter++, title, author, year, copies)
+                    : new Material(materialIdCounter++, type, title, author, year, copies);
+
+            materials.add(mat);
+            saveMaterials();
+            System.out.println("Material added successfully! ID: " + mat.getMaterialId());
+        } catch (Exception e) { System.out.println("Error adding material: " + e.getMessage()); }
+    }
+
+    private static void editMaterial() {
+        try {
+            System.out.print("Enter material ID to edit: ");
+            int id = Integer.parseInt(sc.nextLine().trim());
+            Optional<Material> om = materials.stream().filter(m -> m.getMaterialId() == id).findFirst();
+            if (om.isEmpty()) { System.out.println("Material not found."); return; }
+            Material m = om.get();
+
+            System.out.print("Enter new title/name (enter to keep): ");
+            String s = sc.nextLine().trim(); if (!s.isEmpty()) m.setTitle(s);
+            System.out.print("Enter new author/publisher (enter to keep): ");
+            s = sc.nextLine().trim(); if (!s.isEmpty()) m.setAuthor(s);
+            System.out.print("Enter new number of copies (enter to keep): ");
+            s = sc.nextLine().trim(); if (!s.isEmpty()) m.setTotalCopies(Integer.parseInt(s));
+            saveMaterials();
+            System.out.println("Material updated successfully!");
+        } catch (Exception e) { System.out.println("Invalid input: " + e.getMessage()); }
+    }
+
+    private static void deleteMaterial() {
+        try {
+            System.out.print("Enter material ID to delete: ");
+            int id = Integer.parseInt(sc.nextLine().trim());
+            boolean removed = materials.removeIf(m -> m.getMaterialId() == id);
+            if (removed) { saveMaterials(); System.out.println("Material deleted successfully!"); }
+            else System.out.println("Material not found.");
+        } catch (Exception e) { System.out.println("Error deleting material: " + e.getMessage()); }
+    }
+
+    private static void viewMaterials() {
+        if (materials.isEmpty()) { System.out.println("No materials found."); return; }
+        System.out.println("\n--- Library Materials ---");
+        materials.forEach(System.out::println);
+    }
+
+    /* -------------------- BORROW & RETURN -------------------- */
+    private static void borrowMaterial() {
+        try {
+            System.out.print("Enter borrower ID: ");
+            int bid = Integer.parseInt(sc.nextLine().trim());
+            Borrower borrower = findBorrower(bid);
+            if (borrower == null) { System.out.println("Borrower not found."); return; }
+            if (borrower.getViolations() >= 3) { System.out.println("Borrower has 3 strikes. Cannot borrow."); return; }
+
+            System.out.print("Enter material ID: ");
+            int mid = Integer.parseInt(sc.nextLine().trim());
+            Material material = findMaterial(mid);
+            if (material == null || material.getTotalCopies() <= 0) { System.out.println("Material not available."); return; }
+
+            LocalDate borrowDate = LocalDate.now();
+            int days = material.getReturnDays();
+            LocalDate dueDate = borrowDate.plusDays(days);
+
+            material.setTotalCopies(material.getTotalCopies() - 1);
+            transactions.add(new Transaction(bid, mid, borrowDate, dueDate));
+            saveMaterials(); saveTransactions();
+            System.out.println("Borrow successful. Due date: " + dueDate);
+        } catch (Exception e) { System.out.println("Error during borrow: " + e.getMessage()); }
+    }
+
+    private static void returnMaterial() {
+        try {
+            System.out.print("Enter borrower ID: ");
+            int bid = Integer.parseInt(sc.nextLine().trim());
+            Optional<Transaction> ot = transactions.stream()
+                    .filter(t -> t.getBorrowerId() == bid && !t.isReturned()).findFirst();
+            if (ot.isEmpty()) { System.out.println("No active borrow found for this borrower."); return; }
+            Transaction t = ot.get();
+            Material m = findMaterial(t.getMaterialId());
+            LocalDate now = LocalDate.now();
+            t.setReturned(true);
+            if (m != null) m.setTotalCopies(m.getTotalCopies() + 1);
+            if (now.isAfter(t.getDueDate())) {
+                Borrower b = findBorrower(bid);
+                if (b != null) { b.setViolations(b.getViolations() + 1); saveBorrowers(); }
+                System.out.println("Late return! Violation recorded.");
+            }
+            saveMaterials(); saveTransactions();
+            System.out.println("Material returned successfully!");
+        } catch (Exception e) { System.out.println("Error processing return: " + e.getMessage()); }
+    }
+
+    /* -------------------- HISTORY -------------------- */
+    private static void showBorrowerHistory() {
+        try {
+            System.out.print("Enter borrower ID: ");
+            int bid = Integer.parseInt(sc.nextLine().trim());
+            System.out.println("\n--- Borrower History ---");
+            transactions.stream().filter(t -> t.getBorrowerId() == bid).forEach(System.out::println);
+        } catch (Exception e) { System.out.println("Invalid input."); }
+    }
+
+    private static void showBookHistory() {
+        try {
+            System.out.print("Enter material ID: ");
+            int mid = Integer.parseInt(sc.nextLine().trim());
+            System.out.println("\n--- Book History ---");
+            boolean found = false;
+            for (Transaction t : transactions) {
+                if (t.getMaterialId() == mid) {
+                    Borrower b = findBorrower(t.getBorrowerId());
+                    System.out.println("Borrower: " + (b != null ? b.getFirstName() + " " + b.getLastName() : "Unknown") +
+                            " | Borrowed: " + t.getBorrowDate() + " | Due: " + t.getDueDate() + " | Returned: " + (t.isReturned() ? "Yes" : "No"));
+                    found = true;
+                }
+            }
+            if (!found) System.out.println("No history found for this material.");
+        } catch (Exception e) { System.out.println("Invalid input."); }
+    }
+
+    /* -------------------- FILE I/O -------------------- */
+    private static void loadFiles() {
+        try {
+            List<String> bl = FileUtil.readLines(BORROWER_FILE);
+            for (String line : bl) {
+                if (line.isBlank()) continue;
+                String[] p = line.split(",");
+                borrowers.add(new Borrower(Integer.parseInt(p[0]), p[1], p[2], Integer.parseInt(p[3]), p[4], Integer.parseInt(p[5])));
+                borrowerIdCounter = Math.max(borrowerIdCounter, Integer.parseInt(p[0]) + 1);
+            }
+
+            List<String> ml = FileUtil.readLines(MATERIAL_FILE);
+            for (String line : ml) {
+                if (line.isBlank()) continue;
+                String[] p = line.split(",");
+                int id = Integer.parseInt(p[0]);
+                String type = p[1];
+                String title = p[2];
+                String author = p[3];
+                int year = Integer.parseInt(p[4]);
+                int copies = Integer.parseInt(p[5]);
+                Material m = type.equalsIgnoreCase("book") ? new Book(id, title, author, year, copies)
+                        : new Material(id, type, title, author, year, copies);
+                materials.add(m);
+                materialIdCounter = Math.max(materialIdCounter, id + 1);
+            }
+
+            List<String> tl = FileUtil.readLines(TRANSACTION_FILE);
+            for (String line : tl) {
+                if (line.isBlank()) continue;
+                String[] p = line.split(",");
+                int bid = Integer.parseInt(p[0]);
+                int mid = Integer.parseInt(p[1]);
+                LocalDate bd = LocalDate.parse(p[2]);
+                LocalDate dd = LocalDate.parse(p[3]);
+                boolean ret = Boolean.parseBoolean(p[4]);
+                transactions.add(new Transaction(bid, mid, bd, dd, ret));
+            }
+        } catch (Exception e) {
+            System.out.println("Error loading files: " + e.getMessage());
+        }
+    }
+
+    private static void saveBorrowers() {
+        try {
+            List<String> lines = borrowers.stream()
+                    .map(b -> String.join(",", String.valueOf(b.getBorrowerId()), b.getFirstName(), b.getLastName(), String.valueOf(b.getAge()), b.getEmail(), String.valueOf(b.getViolations())))
+                    .collect(Collectors.toList());
+            FileUtil.writeLines(BORROWER_FILE, lines);
+        } catch (Exception e) { System.out.println("Error saving borrowers: " + e.getMessage()); }
+    }
+
+    private static void saveMaterials() {
+        try {
+            List<String> lines = materials.stream()
+                    .map(m -> String.join(",", String.valueOf(m.getMaterialId()), m.getType(), m.getTitle(), m.getAuthor(), String.valueOf(m.getYear()), String.valueOf(m.getTotalCopies())))
+                    .collect(Collectors.toList());
+            FileUtil.writeLines(MATERIAL_FILE, lines);
+        } catch (Exception e) { System.out.println("Error saving materials: " + e.getMessage()); }
+    }
+
+    private static void saveTransactions() {
+        try {
+            List<String> lines = transactions.stream()
+                    .map(t -> String.join(",", String.valueOf(t.getBorrowerId()), String.valueOf(t.getMaterialId()), t.getBorrowDate().toString(), t.getDueDate().toString(), String.valueOf(t.isReturned())))
+                    .collect(Collectors.toList());
+            FileUtil.writeLines(TRANSACTION_FILE, lines);
+        } catch (Exception e) { System.out.println("Error saving transactions: " + e.getMessage()); }
+    }
+
+    /* -------------------- HELPERS -------------------- */
+    private static Borrower findBorrower(int id) { return borrowers.stream().filter(b -> b.getBorrowerId() == id).findFirst().orElse(null); }
+    private static Material findMaterial(int id) { return materials.stream().filter(m -> m.getMaterialId() == id).findFirst().orElse(null); }
+
+    private static void exitSystem() {
+        saveBorrowers(); saveMaterials(); saveTransactions();
+        System.out.println("\nThank you for using the Fantastic4 Library System!");
+        System.exit(0);
+    }
+}
+
+/* -------------------- UTILITY & MODEL CLASSES -------------------- */
+class FileUtil {
+    static List<String> readLines(String file) throws IOException {
+        Path p = Paths.get(file);
+        if (!Files.exists(p)) Files.createFile(p);
+        return Files.readAllLines(p);
+    }
+
+    static void writeLines(String file, List<String> lines) throws IOException {
+        try (PrintWriter pw = new PrintWriter(file)) { lines.forEach(pw::println); }
+    }
+}
+
+class Validator {
+    static boolean validName(String s) { return s != null && s.matches("[A-Za-z]+(?:[ '-][A-Za-z]+)*"); }
+    static boolean validEmail(String e) { return e != null && e.contains("@") && e.contains("."); }
+}
+
+class Borrower {
+    private int borrowerId, age, violations = 0;
+    private String firstName, lastName, email;
+
+    Borrower(int id, String f, String l, int a, String e) { this.borrowerId = id; this.firstName = f; this.lastName = l; this.age = a; this.email = e; }
+    Borrower(int id, String f, String l, int a, String e, int v) { this(id, f, l, a, e); this.violations = v; }
+
+    public int getBorrowerId() { return borrowerId; }
+    public void setBorrowerId(int borrowerId) { this.borrowerId = borrowerId; }
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+    public int getAge() { return age; }
+    public void setAge(int age) { this.age = age; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public int getViolations() { return violations; }
+    public void setViolations(int violations) { this.violations = violations; }
+
+    @Override
+    public String toString() { return borrowerId + " | " + firstName + " " + lastName + " | Age: " + age + " | Email: " + email + " | Violations: " + violations; }
+}
+
+class Material {
+    private int materialId, year, totalCopies;
+    private String type, title, author;
+
+    Material(int id, String t, String ti, String a, int y, int c) { this.materialId = id; this.type = t; this.title = ti; this.author = a; this.year = y; this.totalCopies = c; }
+
+    public int getMaterialId() { return materialId; }
+    public void setMaterialId(int materialId) { this.materialId = materialId; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getAuthor() { return author; }
+    public void setAuthor(String author) { this.author = author; }
+    public int getYear() { return year; }
+    public void setYear(int year) { this.year = year; }
+    public int getTotalCopies() { return totalCopies; }
+    public void setTotalCopies(int totalCopies) { this.totalCopies = totalCopies; }
+
+    // polymorphism entrypoint: subclasses can override
+    public int getReturnDays() {
+        try { return MaterialType.valueOf(type.toUpperCase()).getDays(); }
+        catch (Exception e) { return 7; }
+    }
+
+    @Override
+    public String toString() { return materialId + " | " + type + " | " + title + " | " + author + " | " + year + " | Copies: " + totalCopies; }
+}
+
+class Book extends Material {
+    public Book(int id, String title, String author, int year, int copies) { super(id, "Book", title, author, year, copies); }
+
+    @Override
+    public int getReturnDays() { return 7; }
+
+    @Override
+    public String toString() { return getMaterialId() + " | Book | " + getTitle() + " | " + getAuthor() + " | Year: " + getYear() + " | Copies: " + getTotalCopies(); }
+}
+
+enum MaterialType { BOOK(7), JOURNAL(3), MAGAZINE(0), THESIS(2);
+    private final int days; MaterialType(int d) { days = d; } int getDays() { return days; } }
+
+class Transaction {
+    private int borrowerId, materialId; private LocalDate borrowDate, dueDate; private boolean returned;
+
+    Transaction(int b, int m, LocalDate bd, LocalDate dd) { borrowerId = b; materialId = m; borrowDate = bd; dueDate = dd; returned = false; }
+    Transaction(int b, int m, LocalDate bd, LocalDate dd, boolean r) { this(b, m, bd, dd); returned = r; }
+
+    public int getBorrowerId() { return borrowerId; }
+    public void setBorrowerId(int borrowerId) { this.borrowerId = borrowerId; }
+    public int getMaterialId() { return materialId; }
+    public void setMaterialId(int materialId) { this.materialId = materialId; }
+    public LocalDate getBorrowDate() { return borrowDate; }
+    public void setBorrowDate(LocalDate borrowDate) { this.borrowDate = borrowDate; }
+    public LocalDate getDueDate() { return dueDate; }
+    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+    public boolean isReturned() { return returned; }
+    public void setReturned(boolean returned) { this.returned = returned; }
+
+    @Override
+    public String toString() { return "Borrower ID: " + borrowerId + " | Material ID: " + materialId + " | Borrowed: " + borrowDate + " | Due: " + dueDate + " | Returned: " + returned; }
+}
