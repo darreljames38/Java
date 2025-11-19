@@ -5,10 +5,11 @@ import java.time.*;
 
 /**
  * LibrarySystem.java
- * Console-based Library System implementing the project specification.
+ * Console-based Library System.
  *
  * Group: Fantastic4
  */
+
 
 public class LibrarySystem {
     private static ArrayList<Borrower> borrowers = new ArrayList<>();
@@ -407,7 +408,7 @@ public class LibrarySystem {
     private static void exitSystem() {
         System.out.println("\nThank you for using the Library System!");
         System.out.println("Group: Fantastic4");
-        System.out.println("Members: Alice, Bob, Charlie, Daryl");
+        System.out.println("Members: Sanchez, Perez, Ison, Evangelista");
         System.exit(0);
     }
 
